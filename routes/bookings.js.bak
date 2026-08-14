@@ -1,0 +1,43 @@
+const express = require('express');
+const router = express.Router();
+const {
+  createBooking,
+  getBookingsByParent,
+  getBookingsByVenue,
+  getAllBookings,
+  getBookingById,
+  updateBookingStatus,
+  cancelBooking
+} = require('../controllers/bookingsController');
+const authenticateToken = require('../middleware/auth');
+ 
+// ──────────────────────────────────────────────
+// SPECIFIC routes FIRST (so /admin/all and /parent/:id don't get caught by /:id)
+// ──────────────────────────────────────────────
+ 
+// Admin: list ALL bookings across all venues
+router.get('/admin/all', authenticateToken, getAllBookings);
+ 
+// Parent: list bookings for a specific parent
+router.get('/parent/:parent_id', authenticateToken, getBookingsByParent);
+ 
+// Venue: list bookings for a specific venue
+router.get('/venue/:venue_id', authenticateToken, getBookingsByVenue);
+ 
+// ──────────────────────────────────────────────
+// GENERIC routes
+// ──────────────────────────────────────────────
+ 
+// Create new booking
+router.post('/', authenticateToken, createBooking);
+ 
+// Update booking status (used by admin & venue dashboards)
+router.put('/:id/status', authenticateToken, updateBookingStatus);
+ 
+// Cancel a booking
+router.put('/:id/cancel', authenticateToken, cancelBooking);
+ 
+// Get one booking by ID (must be LAST among GETs to not catch /admin or /parent)
+router.get('/:id', authenticateToken, getBookingById);
+ 
+module.exports = router;
