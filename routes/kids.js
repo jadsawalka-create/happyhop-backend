@@ -2,23 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { addChild, getAllKids, getKids, updateChild, deleteChild } = require('../controllers/kidsController');
 const authenticateToken = require('../middleware/auth');
+const { adminOnly, staffOnly, venueFromParam, venueFromBody, venueFromRecord, selfFromParam, kidAccess, bookingAccess } = require('../middleware/access');
 
-// Admin: get all kids (no auth — admin portal uses its own token check)
-router.get('/', getAllKids);
-
-// Admin: add standalone kid (no parent auth needed)
-router.post('/standalone', addChild);
-
+// All kids: admins and venue owners only (was public).
+router.get('/', authenticateToken, staffOnly, getAllKids);
+// Kid without a parent account (walk-ins): venues/admin only (was public).
+router.post('/standalone', authenticateToken, staffOnly, addChild);
 // Parent: add kid linked to their account
 router.post('/', authenticateToken, addChild);
-
-// Parent: get their kids
-router.get('/parent/:parent_id', authenticateToken, getKids);
-
-// Update a kid
-router.put('/:id', authenticateToken, updateChild);
-
-// Delete a kid
-router.delete('/:id', deleteChild);
+// A parent's kids: the parent, venues (check-in) or admin.
+router.get('/parent/:parent_id', authenticateToken, selfFromParam('parent_id', { allowVenueOwners: true }), getKids);
+// Update / delete a kid: its parent, venues or admin (delete was public).
+router.put('/:id', authenticateToken, kidAccess, updateChild);
+router.delete('/:id', authenticateToken, kidAccess, deleteChild);
 
 module.exports = router;

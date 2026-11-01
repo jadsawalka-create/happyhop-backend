@@ -1,17 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { getStaff, addStaff, updateStaff, deleteStaff } = require('../controllers/staffController');
+const auth = require('../middleware/auth');
+const { adminOnly, staffOnly, venueFromParam, venueFromBody, venueFromRecord, selfFromParam, kidAccess, bookingAccess } = require('../middleware/access');
 
-// Get all staff for a venue
-router.get('/:venue_id', getStaff);
-
-// Add a staff member
-router.post('/', addStaff);
-
-// Update a staff member
-router.put('/:id', updateStaff);
-
-// Delete a staff member
-router.delete('/:id', deleteStaff);
+// Staff lists are private to the venue (owner) and admins.
+router.get('/:venue_id', auth, venueFromParam('venue_id'), getStaff);
+router.post('/', auth, venueFromBody('venue_id'), addStaff);
+router.put('/:id', auth, venueFromRecord('staff'), updateStaff);
+router.delete('/:id', auth, venueFromRecord('staff'), deleteStaff);
 
 module.exports = router;

@@ -1,0 +1,21 @@
+Planzy backend — access control (who can see / change what)
+============================================================
+Roles (from the login token):
+  Admin        email listed in Railway variable ADMIN_EMAILS
+  Venue owner  email = owner_email of a venue (all their branches)
+  Parent       their own records only
+
+New files:  middleware/access.js, middleware/optionalAuth.js
+Changed:    routes/venues, staff, rooms, kids, bookings, cafe, registries,
+            sessions, settings, requests, packages, schedule, auth
+
+Highlights
+  - Venues: only that venue's owner (or admin) can edit; only admins add/delete.
+  - Staff, rooms, packages, schedule, café menu: only that venue (or admin) can change.
+  - Kids: the full list, deleting and editing need parent/venue/admin (were public).
+  - Bookings: parents see only their own; venues see only theirs; only the venue
+    or admin can confirm / mark paid. Parents can still cancel and edit party plans.
+  - Café orders & registries: parents see only their own; venues only theirs.
+  - Live sessions: venues/admins get full details; the public only gets counts.
+  - Platform settings & venue requests: admins only.
+  - GET /api/auth/me tells the admin portal whether the login is an admin.

@@ -11,19 +11,20 @@ const {
   cancelBooking
 } = require('../controllers/bookingsController');
 const authenticateToken = require('../middleware/auth');
+const { adminOnly, staffOnly, venueFromParam, venueFromBody, venueFromRecord, selfFromParam, kidAccess, bookingAccess, bookingVenueOnly } = require('../middleware/access');
 
 // ─────────────────────────────────────────────────────────────
 // SPECIFIC routes FIRST (so /admin/all and /parent/:id don't get caught by /:id)
 // ─────────────────────────────────────────────────────────────
 
 // Admin: list ALL bookings across all venues
-router.get('/admin/all', authenticateToken, getAllBookings);
+router.get('/admin/all', authenticateToken, adminOnly, getAllBookings);
 
 // Parent: list bookings for a specific parent
-router.get('/parent/:parent_id', authenticateToken, getBookingsByParent);
+router.get('/parent/:parent_id', authenticateToken, selfFromParam('parent_id'), getBookingsByParent);
 
 // Venue: list bookings for a specific venue
-router.get('/venue/:venue_id', authenticateToken, getBookingsByVenue);
+router.get('/venue/:venue_id', authenticateToken, venueFromParam('venue_id'), getBookingsByVenue);
 
 // ─────────────────────────────────────────────────────────────
 // GENERIC routes
@@ -33,15 +34,16 @@ router.get('/venue/:venue_id', authenticateToken, getBookingsByVenue);
 router.post('/', authenticateToken, createBooking);
 
 // Update booking status (used by admin & venue dashboards)
-router.put('/:id/status', authenticateToken, updateBookingStatus);
+router.put('/:id/status', authenticateToken, bookingVenueOnly, updateBookingStatus);  // venue/admin only
 
 // Cancel a booking
-router.put('/:id/cancel', authenticateToken, cancelBooking);
+router.put('/:id/cancel', authenticateToken, bookingAccess, cancelBooking);
 
 // NEW: Generic update — used by the "Mark Paid" button on the dashboard
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, bookingAccess, async (req, res) => {
   const { id } = req.params;
-  const allowed = ['is_paid', 'paid_at', 'notes', 'status', 'total_price'];
+  // Parents may only edit their party plan (notes + total); status & payment are the venue's.
+  const allowed = req.bookingRole === 'parent' ? ['notes', 'total_price'] : ['is_paid', 'paid_at', 'notes', 'status', 'total_price'];
   const updates = {};
   for (const k of allowed) {
     if (Object.prototype.hasOwnProperty.call(req.body || {}, k)) updates[k] = req.body[k];
@@ -65,6 +67,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // Get one booking by ID (must be LAST among GETs to not catch /admin or /parent)
-router.get('/:id', authenticateToken, getBookingById);
+router.get('/:id', authenticateToken, bookingAccess, getBookingById);
 
 module.exports = router;

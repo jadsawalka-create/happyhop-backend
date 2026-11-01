@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const c = require('../controllers/registriesController');
 const auth = require('../middleware/auth');
+const { venueFromParam, selfFromParam } = require('../middleware/access');
 
 // ── Public (no auth) ──
 // Guests claim items without logging in, using the share link
@@ -16,8 +17,8 @@ router.post('/items/:itemId/reserve', c.reserveItem);
 router.delete('/reservations/:reservationId', c.cancelReservation);
 
 // ── Authenticated ──
-router.get('/parent/:parentId', auth, c.getByParent);
-router.get('/venue/:venueId', auth, c.getByVenue);
+router.get('/parent/:parentId', auth, selfFromParam('parentId'), c.getByParent);
+router.get('/venue/:venueId', auth, venueFromParam('venueId'), c.getByVenue);
 router.get('/:id', auth, c.getById);
 router.get('/:id/reservations', auth, c.listReservationsForRegistry);
 

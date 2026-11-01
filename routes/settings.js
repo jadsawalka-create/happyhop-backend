@@ -8,6 +8,6 @@ const authMiddleware = require('../middleware/auth');
 router.get('/', settingsController.getSettings);
 
 // Admin write — protected
-router.put('/', authMiddleware, settingsController.updateSettings);
+router.put('/', authMiddleware, require('../middleware/access').adminOnly, settingsController.updateSettings);
 
 module.exports = router;
