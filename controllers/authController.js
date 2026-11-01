@@ -143,4 +143,24 @@ const setVenueOwnerPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getUsers, setVenueOwnerPassword };
+// DELETE /api/auth/me — permanently delete the logged-in user's account.
+// Removes their kids; deleting the user also removes their bookings and gift
+// registries (ON DELETE CASCADE) and detaches their café orders (SET NULL).
+const deleteAccount = async (req, res) => {
+  try {
+    const id = req.user && req.user.id;
+    if (!id) return res.status(401).json({ message: 'Not logged in' });
+
+    const { error: kidsError } = await supabase.from('kids').delete().eq('parent_id', id);
+    if (kidsError) throw kidsError;
+
+    const { error } = await supabase.from('users').delete().eq('id', id);
+    if (error) throw error;
+
+    res.json({ message: 'Account deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { register, login, getUsers, setVenueOwnerPassword, deleteAccount };
